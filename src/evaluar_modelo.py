@@ -2,7 +2,13 @@ from pathlib import Path
 
 import joblib
 import pandas as pd
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "data"
@@ -35,12 +41,15 @@ def evaluar_modelo():
 
     modelo = joblib.load(MODEL_FILE)
     y_pred = modelo.predict(X_test)
+    y_proba = None
+    if hasattr(modelo, "predict_proba"):
+        y_proba = modelo.predict_proba(X_test)[:, 1]
 
     accuracy = accuracy_score(y_test, y_pred)
     precision = precision_score(y_test, y_pred, zero_division=0)
     recall = recall_score(y_test, y_pred, zero_division=0)
     f1 = f1_score(y_test, y_pred, zero_division=0)
-
+    roc_auc = roc_auc_score(y_test, y_proba) if y_proba is not None else 0.0
     contenido = f"""# Métricas del modelo de churn
 
 ## Resultados principales
@@ -51,6 +60,7 @@ def evaluar_modelo():
 | Precision | {precision:.4f} |
 | Recall | {recall:.4f} |
 | F1-score | {f1:.4f} |
+| ROC-AUC | {roc_auc:.4f} |
 
 ## Interpretación inicial
 

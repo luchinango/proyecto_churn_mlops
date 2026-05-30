@@ -2,15 +2,18 @@ from pathlib import Path
 
 import joblib
 import pandas as pd
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "data"
 MODELS_DIR = BASE_DIR / "models"
 TRAIN_DATA = DATA_DIR / "train.csv"
 MODEL_FILE = MODELS_DIR / "modelo_churn.pkl"
+ALGORITMO = "RandomForestClassifier"
+HIPERPARAMETROS = {"n_estimators": 100, "random_state": 42}
 
 
 def entrenar_modelo():
@@ -31,11 +34,19 @@ def entrenar_modelo():
     modelo = Pipeline(
         steps=[
             ("escalado", StandardScaler()),
-            ("clasificador", LogisticRegression()),
+            (
+                "clasificador",
+                RandomForestClassifier(
+                    n_estimators=HIPERPARAMETROS["n_estimators"],
+                    random_state=HIPERPARAMETROS["random_state"],
+                ),
+            ),
         ]
     )
 
     modelo.fit(X, y)
+    print(f"Algoritmo: {ALGORITMO}")
+    print(f"Hiperparámetros: {HIPERPARAMETROS}")
     joblib.dump(modelo, MODEL_FILE)
 
     print("Modelo entrenado correctamente.")

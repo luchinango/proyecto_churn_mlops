@@ -8,30 +8,49 @@ client = TestClient(app)
 def test_inicio():
     response = client.get("/")
     assert response.status_code == 200
-    assert "mensaje" in response.json()
+    data = response.json()
+    assert data["mensaje"] == "Servicio ML-Ops activo"
+    assert data["estado"] == "ok"
+    assert "Luis Alberto Martínez Barrientos" in data["autor"]
 
 
 def test_health():
     response = client.get("/health")
     assert response.status_code == 200
-    assert "estado" in response.json()
-    assert "modelo_disponible" in response.json()
+    data = response.json()
+    assert data["estado"] == "ok"
+    assert data["modelo"] == "modelo_churn_v1"
 
-def test_predict():
+
+def test_predict_valido():
     payload = {
-        "edad": 28,
-        "antiguedad_meses": 8,
-        "saldo_promedio": 1200,
+        "antiguedad": 12,
+        "cargo_mensual": 95.5,
         "reclamos": 3,
-        "usa_app": 0,
     }
     response = client.post("/predict", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["prediccion"] in ("alto_riesgo", "bajo_riesgo")
+    assert 0 <= data["probabilidad"] <= 1
+    assert data["version_modelo"] == "modelo_churn_v1"
+    assert "Luis Alberto Martínez Barrientos" in data["autor"]
 
-    if response.status_code == 200:
-        data = response.json()
-        assert "churn_predicho" in data
-        assert data["churn_predicho"] in (0, 1)
-        assert "probabilidad_churn" in data
-    else:
-        assert response.status_code == 503
-        assert "detail" in response.json()
+
+def test_predict_campo_faltante():
+    payload = {
+        "antiguedad": 36,
+        "cargo_mensual": 60.5,
+    }
+    response = client.post("/predict", json=payload)
+    assert response.status_code == 422
+
+
+def test_predict_valor_negativo():
+    payload = {
+        "antiguedad": 12,
+        "cargo_mensual": -50,
+        "reclamos": 1,
+    }
+    response = client.post("/predict", json=payload)
+    assert response.status_code == 422

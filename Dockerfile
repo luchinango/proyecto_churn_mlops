@@ -1,15 +1,9 @@
-FROM python:3.12-slim-bookworm
-
-# Actualiza paquetes del SO para mitigar CVEs reportadas en la imagen base
-RUN apt-get update && \
-    apt-get dist-upgrade -y && \
-    rm -rf /var/lib/apt/lists/*
+FROM python:3.12-slim
 
 WORKDIR /app
 
 COPY requirements.txt .
-RUN python -m pip install --upgrade pip && \
-    python -m pip install --no-cache-dir -r requirements.txt
+RUN python -m pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
